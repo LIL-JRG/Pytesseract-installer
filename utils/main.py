@@ -52,8 +52,8 @@ def install_tesseract():
 
 def add_tesseract_to_path():
     user = os.getlogin()
-    tesseract_path = f"C:\\Users\\{user}\\AppData\\Local\\Programs\\Tesseract-OCR"
-    tessdata_prefix = f"{tesseract_path}\\tessdata"
+    tesseract_path = f"C:\\Program Files\\Tesseract-OCR\\"
+    tessdata_prefix = f"{tesseract_path}\\tessdata\\"
 
     try:
         # Obtener las variables de entorno actuales
