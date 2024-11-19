@@ -4,6 +4,7 @@ import sys
 import requests
 import winreg as reg
 import logging
+import shutil
 
 # Configuración de logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -37,11 +38,42 @@ def download_tesseract():
         logging.error(f"Error al descargar Tesseract: {e}")
         return False
 
+def download_spanish_data():
+    url = "https://github.com/tesseract-ocr/tessdata/raw/main/spa.traineddata"
+    tessdata_dir = "C:\\Program Files\\Tesseract-OCR\\tessdata"
+    target_file = os.path.join(tessdata_dir, "spa.traineddata")
+
+    # Verificar si el archivo ya existe
+    if os.path.exists(target_file):
+        logging.info("El modelo de español ya está instalado.")
+        return True
+
+    try:
+        # Asegurar que el directorio tessdata existe
+        os.makedirs(tessdata_dir, exist_ok=True)
+
+        # Descargar el archivo
+        logging.info("Descargando modelo de español...")
+        response = requests.get(url, timeout=30)
+        response.raise_for_status()
+
+        # Guardar el archivo
+        with open(target_file, "wb") as file:
+            file.write(response.content)
+        
+        logging.info("Modelo de español instalado correctamente.")
+        return True
+    except (requests.RequestException, IOError) as e:
+        logging.error(f"Error al descargar/instalar el modelo de español: {e}")
+        return False
+
 def install_tesseract():
     if os.path.exists("tesseract-setup.exe"):
         try:
             subprocess.run(["tesseract-setup.exe", "/SILENT"], check=True)
             logging.info("Tesseract instalado correctamente.")
+            # Limpiar el archivo de instalación
+            os.remove("tesseract-setup.exe")
             return True
         except subprocess.CalledProcessError as e:
             logging.error(f"Error al instalar Tesseract: {e}")
@@ -87,7 +119,11 @@ def main():
     if download_tesseract() and install_tesseract():
         logging.info("Configurando variables de entorno...")
         if add_tesseract_to_path():
-            logging.info("Instalación y configuración completadas. Por favor, reinicia tu computadora para aplicar los cambios.")
+            # Descargar e instalar el modelo de español
+            if download_spanish_data():
+                logging.info("Instalación y configuración completadas. Por favor, reinicia tu computadora para aplicar los cambios.")
+            else:
+                logging.warning("La instalación se completó, pero hubo problemas al instalar el modelo de español.")
         else:
             logging.warning("La instalación se completó, pero hubo problemas al configurar las variables de entorno.")
     else:
